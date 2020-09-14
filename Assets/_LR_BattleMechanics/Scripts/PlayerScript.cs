@@ -27,7 +27,8 @@ public class PlayerScript : MonoBehaviour
         cam = Camera.main.transform;
         rb = GetComponent<Rigidbody>();
         anim = GetComponentInChildren<Animator>();
-
+        
+        //initialize the atb
         currentAtb = initialAtb;
         atb.maxValue = initialAtb;
     }
@@ -50,20 +51,24 @@ public class PlayerScript : MonoBehaviour
     void GetInput()
     {
         Vector3 worldMove = Vector3.zero;
-
+        
+        //get input
         worldMove.x = Input.GetAxis("Horizontal");
         worldMove.z = Input.GetAxis("Vertical");
         worldMove = worldMove.normalized * moveSpeed;
-        worldMove.y = rb.velocity.y;
+        worldMove.y = rb.velocity.y; //set the y value to the y velocity of the rigidbody
 
+        //create a vector that is relative to camera, to make the movement intuitive
         move = Quaternion.Euler(0f, cam.eulerAngles.y, 0f) * worldMove;
-
+        
+        //loop through all the abilities array, and execute the Perform() method on each member.
         foreach (var ability in abilities)
         {
             ability.Perform(this, enemy, currentAtb);
         }
     }
 
+    //this is for charging the ATB and update the ATB slider bar
     void ChargeATB()
     {
         if (currentAtb < initialAtb)
@@ -74,6 +79,7 @@ public class PlayerScript : MonoBehaviour
         atb.value = currentAtb;
     }
 
+    //method for consuming ATB, gets called by the Ability when performed.
     public void ConsumeATB(float value)
     {
         currentAtb -= value;
@@ -100,12 +106,14 @@ public class PlayerScript : MonoBehaviour
         }
         else
         {
+            //if the enemy isn't null, then set the player facing the enemy
             if (enemy != null)
             {
                 dir = enemy.transform.position - transform.position;
             }
         }
-
+        
+        //set the y direction value to 0, so we get the perfect XZ direction.
         dir.y = 0f;
 
         if (Quaternion.Angle(rb.rotation,Quaternion.LookRotation(dir)) > 10f)
@@ -123,7 +131,8 @@ public class Ability
 
     //public int AtbCost { get => atbCost; }
     public KeyCode Key { get => key; }
-
+    
+    //method for performing the ability, gets called by the player update, but it will only be performed if the ATB is enough and the key is pressed.
     public void Perform(PlayerScript player, EnemyScript target, float atb)
     {
         if (atb < atbCost)
@@ -146,6 +155,7 @@ public class Ability
         {
             if ((target.transform.position - player.transform.position).sqrMagnitude > Mathf.Pow(player.DistThreshold,2f))
             {
+                //out of range, then do tween and play jump animation to approach the enemy
                 player.anim.Play("Jump");
                 player.performMoves = true;
                 Vector3 targetPos = target.transform.position + target.transform.forward * player.DistThreshold;
@@ -160,11 +170,13 @@ public class Ability
             }
             else
             {
+                //in range, perform ability right away
                 player.anim.SetTrigger(trigger);
                 player.performMoves = true;
                 target.Hit(damage, player.transform.position);
             }
-
+            
+            //consume the ATB
             player.ConsumeATB(atbCost);
         }
     }

@@ -17,12 +17,14 @@ public class EnemyScript : MonoBehaviour
         anim = GetComponent<Animator>();
         col = GetComponent<Collider>();
     }
-
+    
+    //this method is for applying damage to the enemy, and it is called by the Ability class of the Player, hitPos would be the player position
     public void Hit(int damage, Vector3 hitPos)
     {
         if (health <= 0)
             return;
-
+        
+        //this will get the closest point on the enemy collider from the player position, and its going to be used for re-position the particle hit fx
         lastHitPos = col.ClosestPoint(hitPos + Vector3.up);
 
         health -= damage;
